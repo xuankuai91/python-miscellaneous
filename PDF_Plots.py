@@ -28,7 +28,7 @@ def AdjustSpines(ax, spines):
         # Hide X-axis ticks
         ax.xaxis.set_ticks([])
 
-fig = plt.figure()
+fig = plt.figure(figsize=(11, 8.5), dpi=300)
 
 # Draw uniform distribution
 x1 = np.linspace(-1, 2)
@@ -100,5 +100,5 @@ plt.vlines(2, 0, 0.2, colors='C1', linestyles='dashed')
 
 plt.tight_layout() # Optimize layout
 
-# Show the plot
+plt.savefig('Figure 5.jpg', dpi=300)
 plt.show()
