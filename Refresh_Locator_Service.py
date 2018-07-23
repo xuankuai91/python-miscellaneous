@@ -6,6 +6,7 @@ import sys
 import os
 import arcpy
 import pprint
+from datetime import datetime
 
 def get_token(server, port, username, password, expiration=60):
 	# Get a token required for Admin changes
@@ -112,3 +113,5 @@ if __name__ == "__main__":
 		# If the sddraft analysis contained errors, display them
 		print "Error returned when creating service definition draft"
 		pprint.pprint(analyze_messages['errors'], indent=2)
+	
+	print service_name + " refreshed on: " + str(datetime.now())
