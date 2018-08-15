@@ -4,8 +4,8 @@ import urllib2
 import json
 import sys
 import os
-import arcpy
 import pprint
+import arcpy
 from datetime import datetime
 
 def get_token(server, port, username, password, expiration=60):
@@ -24,6 +24,7 @@ def get_token(server, port, username, password, expiration=60):
 			print "Failed to get token, return message from server:"
 			print token['messages']
 			sys.exit()
+
 		else:
 			# Return the token to the function which called for it
 			return token['token']
@@ -51,67 +52,70 @@ def toggle_service(server, port, username, password, action, service, token=None
 	status = urllib2.urlopen(op_service_url, ' ').read()
 	
 	if 'success' in status:
-		print "Action " + action.upper() + " successfully performed on " + service
+		success_message = "Action " + action.upper() + " successfully performed on " + service
+		log_file.write(success_message)
+		log_file.write("\n")
+		print success_message
+
 	else: 
-		print "Failed to perform operation. Returned message from the server:"
+		fail_message = "Failed to perform operation. Returned message from the server:"
+		log_file.write(fail_message)
+		log_file.write("\n")
+		log_file.write(status)
+		log_file.write("\n")
+		print fail_message
 		print status
+		sys.exit()
 	
 	return
 
 if __name__ == "__main__":
 	server = 'gismaps.brgov.net'
 	port = '6080'
-	username = 'username'
-	password = 'p@$$w0rd'
-	service_name = 'TEST_Point_Address_Locator'
+	username = 'xkuai'
+	password = 'password'
+	pointaddr_service_name = 'TEST_Point_Address_Locator'
+	composite_service_name = 'TEST_Composite_Locator'
 	service_type = 'GeocodeServer'
 	
-	service = service_name + '.' + service_type
-
-	# Stop services
-	toggle_service(server, port, username, password, 'stop', service, token=None)
+	# Compose the full name of web service (name form: SERVICE_NAME.ServiceType)
+	pointaddr_service = pointaddr_service_name + '.' + service_type
+	composite_service = composite_service_name + '.' + service_type
 
 	# Set environment
 	service_path = r'//GISMaps/E/WebServices/LocatorServices'
 	arcpy.env.workspace = service_path
 	arcpy.env.overwriteOutput = True # Overwrite any existing outputs
 
+	# Create a blank log file
+	log_file = open('log.txt', 'w')
+
+	# Stop services
+	toggle_service(server, port, username, password, 'stop', pointaddr_service, token=None)
+	toggle_service(server, port, username, password, 'stop', composite_service, token=None)
+
 	# Rebuild services
-	arcpy.RebuildAddressLocator_geocoding(service_name)
-	print "Service " + service_name + " successfully rebuilt"
+	try:
+		arcpy.RebuildAddressLocator_geocoding(pointaddr_service_name)
+		print "Service " + pointaddr_service_name + " successfully rebuilt"
 
-	# Start services
-	toggle_service(server, port, username, password, 'start', service, token=None)
+		arcpy.RebuildAddressLocator_geocoding(composite_service_name)
+		print "Service " + composite_service_name + " successfully rebuilt"
 
-	# Create GIS server connection
-	connection_file_path = os.path.dirname(os.path.abspath(__file__))
-	connection_file = 'GIS_Server_Connection.ags'
-	server_url = 'https://gismaps.brgov.net:6443/arcgis/admin'
-	arcpy.mapping.CreateGISServerConnectionFile('PUBLISH_GIS_SERVICES', connection_file_path, connection_file, server_url, 'ARCGIS_SERVER', username, password, save_username_password=True)
-	print "Connection to " + server_url + " successfully built"
+		rebuild_message = pointaddr_service_name + " and " + composite_service_name + " successfully rebuilt\n"
 
-	# Overwrite services
-	locator = os.path.join(service_path, service_name)
-	sd_draft_file = os.path.join(service_path, service_name + '.sddraft')
-	sd_file = os.path.join(service_path, service_name + '.sd')
-	server_connection = os.path.join(connection_file_path, 'GIS_Server_Connection')
+	except:
+		rebuild_message = pointaddr_service_name + " and " + composite_service_name + " NOT rebuilt, please mannually run the script again to view the detailed error message\n"
 
-	analyze_messages = arcpy.CreateGeocodeSDDraft(locator, sd_draft_file, service_name, connection_file_path=server_connection) # Create SD (service definition) draft file
-	print "SD draft file " + sd_draft_file +" successfully created"
+	log_file.write(rebuild_message)
 
-	if analyze_messages['errors'] == {}:
-		try:
-			arcpy.server.StageService(sd_draft_file, sd_file) # Convert SD draft file to a SD file 
-			arcpy.server.UploadServiceDefinition(sd_file, server_connection) # Publish the SD file as a service
-			print "Geocode service successfully published"
+	# Restart services
+	toggle_service(server, port, username, password, 'start', pointaddr_service, token=None)
+	toggle_service(server, port, username, password, 'start', composite_service, token=None)
 
-		except arcpy.ExecuteError:
-			print("An error occurred")
-			print(arcpy.GetMessages(2))
+	# Print success message
+	final_message = pointaddr_service_name + " and " + composite_service_name + " successfully refreshed on: " + str(datetime.now())
+	log_file.write(final_message)
+	print final_message
 
-	else: 
-		# If the sddraft analysis contained errors, display them
-		print "Error returned when creating service definition draft"
-		pprint.pprint(analyze_messages['errors'], indent=2)
-	
-	print service_name + " refreshed on: " + str(datetime.now())
+	log_file.close()
