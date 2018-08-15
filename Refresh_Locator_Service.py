@@ -72,8 +72,8 @@ def toggle_service(server, port, username, password, action, service, token=None
 if __name__ == "__main__":
 	server = 'gismaps.brgov.net'
 	port = '6080'
-	username = 'xkuai'
-	password = 'password'
+	username = 'username'
+	password = 'p@$$w0rd'
 	pointaddr_service_name = 'TEST_Point_Address_Locator'
 	composite_service_name = 'TEST_Composite_Locator'
 	service_type = 'GeocodeServer'
