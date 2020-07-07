@@ -1,67 +1,71 @@
 import arcpy, datetime
 
-start_time = datetime.datetime.now()
+def main():
+    arcpy.env.workspace = r"\\Hgac.net\FileShare\ArcGIS\DataSvcs\GIS\Requests\Workforce\UI_Claims"
+    arcpy.env.overwriteOutput = True
 
-print("Starting HGAC Workforce Solutions UI Claims Data Calculator (TWC Version)")
-print("Version 1.0")
-print("Last update: 7/6/2020")
-print("Support: Xuan.Kuai@h-gac.com" + "\n")
-print("Start time: " + str(start_time) + "\n")
+    # Calculate data for counties
+    print("Starting calculation for HGAC_Counties_UI_Claims_TWC ...")
 
-arcpy.env.workspace = r"\\Hgac.net\FileShare\ArcGIS\DataSvcs\GIS\Requests\Workforce\UI_Claims"
-arcpy.env.overwriteOutput = True
+    county_twc = r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_Workforce_Solutions\Global.GLOBAL_ADMIN.HGAC_Counties_UI_Claims_TWC"
+    county_fields = ["UICount", "NAICS1", "NAICSTitle1", "NAICS1Count", "NAICS2", "NAICSTitle2", "NAICS2Count","NAICS3", "NAICSTitle3", "NAICS3Count","NAICS4", "NAICSTitle4", "NAICS4Count","NAICS5", "NAICSTitle5", "NAICS5Count", "Male", "Female", "GenderUnknown", "Week1", "Week2", "Week3", "Week4", "Week5", "BeginDate", "EndDate"]
 
-# Calculate data for counties
-print("Starting calculation for HGAC_Counties_UI_Claims_TWC ...")
+    print("    Making feature layer for HGAC_Counties_UI_Claims_TWC ...")
+    arcpy.MakeFeatureLayer_management(county_twc, 'county_twc_layer')
 
-county_twc = r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_Workforce_Solutions\Global.GLOBAL_ADMIN.HGAC_Counties_UI_Claims_TWC"
-county_fields = ["UICount", "NAICS1", "NAICSTitle1", "NAICS1Count", "NAICS2", "NAICSTitle2", "NAICS2Count","NAICS3", "NAICSTitle3", "NAICS3Count","NAICS4", "NAICSTitle4", "NAICS4Count","NAICS5", "NAICSTitle5", "NAICS5Count", "Male", "Female", "GenderUnknown", "Week1", "Week2", "Week3", "Week4", "Week5", "BeginDate", "EndDate"]
+    print("    Joining county data ...")
+    arcpy.AddJoin_management('county_twc_layer', 'NAME', 'ui_by_county.csv', 'AreaName')
 
-print("    Making feature layer for HGAC_Counties_UI_Claims_TWC ...")
-arcpy.MakeFeatureLayer_management(county_twc, 'county_twc_layer')
+    print("    Calculating fields ...")
+    for field in county_fields:
+        arcpy.CalculateField_management("county_twc_layer", "Global.GLOBAL_ADMIN.HGAC_Counties_UI_Claims_TWC." + field, "[ui_by_county.csv." + field + "]")
+        print("        " + field)
 
-print("    Joining county data ...")
-arcpy.AddJoin_management('county_twc_layer', 'NAME', 'ui_by_county.csv', 'AreaName')
+    print("    Finalizing calculation for HGAC_Counties_UI_Claims_TWC" + "\n")
+    arcpy.RemoveJoin_management("county_twc_layer")
 
-print("    Calculating fields ...")
-for field in county_fields:
-	arcpy.CalculateField_management("county_twc_layer", "Global.GLOBAL_ADMIN.HGAC_Counties_UI_Claims_TWC." + field, "[ui_by_county.csv." + field + "]")
-	print("        " + field)
+    # Calculate data for ZIP Code areas
+    print("Starting calculation for HGAC_ZIP_Codes_UI_Claims_TWC ...")
 
-print("    Finalizing calculation for HGAC_Counties_UI_Claims_TWC" + "\n")
-arcpy.RemoveJoin_management("county_twc_layer")
+    zip_twc = r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_Workforce_Solutions\Global.GLOBAL_ADMIN.HGAC_ZIP_Codes_UI_Claims_TWC"
+    zip_fields = ["UICount", "Male", "Female", "GenderUnknown", "Week1", "Week2", "Week3", "Week4", "Week5", "BeginDate", "EndDate"]
 
-# Calculate data for ZIP Code areas
-print("Starting calculation for HGAC_ZIP_Codes_UI_Claims_TWC ...")
+    print("    Making feature layer for HGAC_ZIP_Codes_UI_Claims_TWC ...")
+    arcpy.MakeFeatureLayer_management(zip_twc, 'zip_twc_layer')
 
-zip_twc = r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_Workforce_Solutions\Global.GLOBAL_ADMIN.HGAC_ZIP_Codes_UI_Claims_TWC"
-zip_fields = ["UICount", "Male", "Female", "GenderUnknown", "Week1", "Week2", "Week3", "Week4", "Week5", "BeginDate", "EndDate"]
+    print("    Joining ZIP Code area data ...")
+    arcpy.AddJoin_management('zip_twc_layer', 'Zip_Code', 'ui_by_zipcode.xlsx\ui_by_zipcode$', 'ZIP_CODE')
 
-print("    Making feature layer for HGAC_ZIP_Codes_UI_Claims_TWC ...")
-arcpy.MakeFeatureLayer_management(zip_twc, 'zip_twc_layer')
+    print("    Calculating fields ...")
+    for field in zip_fields:
+        arcpy.CalculateField_management("zip_twc_layer", "Global.GLOBAL_ADMIN.HGAC_ZIP_Codes_UI_Claims_TWC." + field, "[ui_by_zipcode$." + field + "]")
+        print("        " + field)
 
-print("    Joining ZIP Code area data ...")
-arcpy.AddJoin_management('zip_twc_layer', 'Zip_Code', 'ui_by_zipcode.xlsx\ui_by_zipcode$', 'ZIP_CODE')
+    print("    Filling null values ...")
+    arcpy.SelectLayerByAttribute_management("zip_twc_layer", "NEW_SELECTION", '"ui_by_zipcode$.ZIP_CODE" IS NULL')
+    arcpy.RemoveJoin_management("zip_twc_layer")
 
-print("    Calculating fields ...")
-for field in zip_fields:
-	arcpy.CalculateField_management("zip_twc_layer", "Global.GLOBAL_ADMIN.HGAC_ZIP_Codes_UI_Claims_TWC." + field, "[ui_by_zipcode$." + field + "]")
-	print("        " + field)
+    for field in zip_fields[:9]:
+        arcpy.CalculateField_management("zip_twc_layer", field, "0")
+        print("        " + field)
 
-print("    Filling null values ...")
-arcpy.SelectLayerByAttribute_management("zip_twc_layer", "NEW_SELECTION", '"ui_by_zipcode$.ZIP_CODE" IS NULL')
-arcpy.RemoveJoin_management("zip_twc_layer")
+    for field in zip_fields[-2:]:
+        arcpy.CalculateField_management("zip_twc_layer", field, "NULL")
+        print("        " + field)
 
-for field in zip_fields[:9]:
-	arcpy.CalculateField_management("zip_twc_layer", field, "0")
-	print("        " + field)
+    print("    Finalizing calculation for HGAC_ZIP_Codes_UI_Claims_TWC" + "\n")
 
-for field in zip_fields[-2:]:
-	arcpy.CalculateField_management("zip_twc_layer", field, "NULL")
-	print("        " + field)
+if __name__ == "__main__":
+    start_time = datetime.datetime.now()
 
-print("    Finalizing calculation for HGAC_ZIP_Codes_UI_Claims_TWC" + "\n")
+    print("Starting HGAC Workforce Solutions UI Claims Data Calculator (TWC Version)")
+    print("Version 1.0")
+    print("Last update: 7/6/2020")
+    print("Support: Xuan.Kuai@h-gac.com" + "\n")
+    print("Start time: " + str(start_time) + "\n")
 
-end_time = datetime.datetime.now()
-print("End time: " + str(end_time) + "\n")
-print("Time elapsed: " + str(end_time - start_time) + "\n")
+    main() # Run main function
+
+    end_time = datetime.datetime.now()
+    print("End time: " + str(end_time) + "\n")
+    print("Time elapsed: " + str(end_time - start_time) + "\n")
