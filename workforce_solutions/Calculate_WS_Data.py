@@ -318,5 +318,6 @@ if __name__ == "__main__":
     main() # Run main function
 
     end_time = datetime.datetime.now()
+    print("\n")
     print("End time: " + str(end_time) + "\n")
     print("Time elapsed: " + str(end_time - start_time) + "\n")
