@@ -135,6 +135,7 @@ def calculate_harris_table(table, county_summary, day):
     print("        Recovered_Mov_Avg")
     arcpy.CalculateField_management('table_tv', "Recovered_Mov_Avg", str(recovered_moving_average))
 
+    print("        Positivity_Mov_Avg")
     # Compose date query of the 14-day period from 2 weeks before the previous day of the execution date to two days before the execution date
     previous_2_weeks_day = day - datetime.timedelta(14)
     previous_2_weeks_day_date = "'{:02d}-{:02d}-{:02d} 00:00:00'".format(previous_2_weeks_day.year, previous_2_weeks_day.month, previous_2_weeks_day.day)
@@ -154,8 +155,6 @@ def calculate_harris_table(table, county_summary, day):
 
     positivity_moving_average = 100 * float(sum(confirmed_change_list_previous_day)) / sum(tests_change_list)
     arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", previous_day_query)
-
-    print("        Positivity_Mov_Avg")
     arcpy.CalculateField_management('table_tv', "Positivity_Mov_Avg", str(positivity_moving_average))
 
 def main():
