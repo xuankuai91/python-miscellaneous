@@ -87,6 +87,54 @@ def calculate_test_count(table, county_summary, day):
 
     arcpy.CalculateField_management('table_tv', "Tests", str(total_tests))
 
+def calculate_positivities(table, county_summary, day):
+    print("        Positivity")
+    # Compose date query of the day before the execution date (for the latest cases data)
+    previous_day = day - datetime.timedelta(1)
+    previous_day_date = "'{:02d}-{:02d}-{:02d} 00:00:00'".format(previous_day.year, previous_day.month, previous_day.day)
+    previous_day_query = arcpy.AddFieldDelimiters(table, "Date_") + " = " + previous_day_date
+
+    arcpy.MakeTableView_management(table, 'table_tv')
+    arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", previous_day_query)
+    arcpy.CalculateField_management('table_tv', "Positivity", "100 * [Total] / [Tests]")
+
+    previous_day_cursor = arcpy.da.SearchCursor(table, ["Date_", "Tests"], previous_day_query)
+    for previous_day_row in previous_day_cursor:
+        previous_day_tests = previous_day_row[1]
+
+    print("        Positivity_Mov_Avg")
+    # Compose date query of two days before the execution date (for the previous tests data)
+    previous_2_day = day - datetime.timedelta(2)
+    previous_2_day_date = "'{:02d}-{:02d}-{:02d} 00:00:00'".format(previous_2_day.year, previous_2_day.month, previous_2_day.day)
+    previous_2_day_query = arcpy.AddFieldDelimiters(table, "Date_") + " = " + previous_2_day_date
+
+    previous_2_day_cursor = arcpy.da.SearchCursor(table, ["Date_", "Tests"], previous_2_day_query)
+    for previous_2_day_row in previous_2_day_cursor:
+        previous_2_day_tests = previous_2_day_row[1]
+
+    arcpy.CalculateField_management('table_tv', "Tests_Change", str(previous_day_tests - previous_2_day_tests))
+
+    # Compose date query of the 7-day period from 1 week before the previous day of the execution date to two days before the execution date
+    previous_week_day = day - datetime.timedelta(7)
+    previous_week_day_date = "'{:02d}-{:02d}-{:02d} 00:00:00'".format(previous_week_day.year, previous_week_day.month, previous_week_day.day)
+    previous_week_query = arcpy.AddFieldDelimiters(table, "Date_") + " BETWEEN " + previous_week_day_date + " AND " + previous_day_date
+
+    # Calculate 7-day average positivity rate
+    previous_week_cursor = arcpy.da.SearchCursor(table, ["Date_", "Change", "Tests_Change"], previous_week_query)
+
+    confirmed_change_list = []
+    tests_change_list = []
+    for previous_week_row in previous_week_cursor:
+        if previous_week_row[1] is not None:
+            confirmed_change_list.append(previous_week_row[1])
+
+        if previous_week_row[2] is not None:
+            tests_change_list.append(previous_week_row[2])
+
+    positivity_moving_average = 100 * float(sum(confirmed_change_list)) / sum(tests_change_list)
+    arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", previous_day_query)
+    arcpy.CalculateField_management('table_tv', "Positivity_Mov_Avg", str(positivity_moving_average))
+
 def calculate_table(table, fields, county_summary, day):
     copy_case_counts(table, fields, county_summary, day)
     calculate_change(table, day)
@@ -105,6 +153,7 @@ def main():
     confirmed_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Confirmed_Cases_and_Tests"
     calculate_table(confirmed_table, ["NAME", "No_of_Cases"], county_summary, yesterday)
     calculate_test_count(confirmed_table, county_summary, yesterday)
+    calculate_positivities(confirmed_table, county_summary, yesterday)
 
     # Copy data from HGAC_Counties_COVID_19_Cases to HGAC_COVID_19_Active_Cases, and calculate total, change, and 7-day average
     print("    HGAC_COVID_19_Active_Cases")
@@ -125,8 +174,8 @@ if __name__ == "__main__":
     start_time = datetime.datetime.now()
 
     print("Starting Calculate Daily COVID-19 Numbers tool")
-    print("Version 1.0")
-    print("Last update: 9/18/2020")
+    print("Version 1.1")
+    print("Last update: 9/22/2020")
     print("Support: Xuan.Kuai@h-gac.com" + "\n")
     print("Start time: " + str(start_time) + "\n")
 
