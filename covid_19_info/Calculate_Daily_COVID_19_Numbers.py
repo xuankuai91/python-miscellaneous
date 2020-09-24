@@ -1,16 +1,27 @@
 import arcpy, datetime
 
 def copy_case_counts(table, fields, county_summary, day):
-    # Insert a new row to table
-    target_cursor = arcpy.InsertCursor(table)
-    target_row = target_cursor.newRow()
+    try:
+        # Insert a new row to table
+        target_cursor = arcpy.InsertCursor(table)
+        target_row = target_cursor.newRow()
 
-    # Write date of the day before the execution date
-    date = "{}/{}/{}".format(day.year, day.month, day.day)
-    target_row.setValue("Date_", date)
+        # Write date of the day before the execution date
+        date = "{}/{}/{}".format(day.year, day.month, day.day)
+        target_row.setValue("Date_", date)
+        target_cursor.insertRow(target_row)
+
+    except:
+        continue
+
+    # Compose date query of the day before the execution date (for the latest cases data)
+    this_day_date = "'{:02d}-{:02d}-{:02d} 00:00:00'".format(day.year, day.month, day.day)
+    this_day_query = arcpy.AddFieldDelimiters(table, "Date_") + " = " + this_day_date
 
     # Copy case count from HGAC_Counties_COVID_19_Cases to table
-    print("        Counties")
+    arcpy.MakeTableView_management(table, 'table_tv')
+    arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", this_day_query)
+
     county_cursor = arcpy.da.SearchCursor(county_summary, fields)
 
     for county_row in county_cursor:
@@ -20,9 +31,9 @@ def copy_case_counts(table, fields, county_summary, day):
         if county_name == "Fort Bend":
             county_name = "Fort_Bend"
 
-        target_row.setValue(county_name, value)
-
-    target_cursor.insertRow(target_row)
+        print("        " + county_name)
+        arcpy.CalculateField_management('table_tv', county_name, str(value))
+    
 
 def calculate_change(table, day):
     # Calculate total number of cases
@@ -56,7 +67,7 @@ def calculate_change(table, day):
 
     arcpy.CalculateField_management('table_tv', "Change", str(change))
     
-    print("        7-day moving average")
+    print("        Mov_Avg")
 
     # Compose date query of the 7-day period from a week before the execution date to the previous day of the execution date
     past_week_day = day - datetime.timedelta(6)
@@ -174,8 +185,8 @@ if __name__ == "__main__":
     start_time = datetime.datetime.now()
 
     print("Starting Calculate Daily COVID-19 Numbers tool")
-    print("Version 1.1")
-    print("Last update: 9/22/2020")
+    print("Version 1.2")
+    print("Last update: 9/24/2020")
     print("Support: Xuan.Kuai@h-gac.com" + "\n")
     print("Start time: " + str(start_time) + "\n")
 
