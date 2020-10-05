@@ -12,11 +12,11 @@ def calculate_harris_table(table, county_summary, day):
         recovered_cases = harris_row[4]
         tests = harris_row[5]
 
-    # Compose date query of the day before the execution date (for the latest cases data)
+    # Compose date query of the execution date (for the latest cases data)
     this_day_date = "'{:02d}-{:02d}-{:02d} 00:00:00'".format(day.year, day.month, day.day)
     this_day_query = arcpy.AddFieldDelimiters(table, "Date_") + " = " + this_day_date
 
-    # Compose date query of two days before the execution date (for the previous cases data and the latest tests data)
+    # Compose date query of the day before the execution date (for the previous cases data and the latest tests data)
     previous_day = day - datetime.timedelta(1)
     previous_day_date = "'{:02d}-{:02d}-{:02d} 00:00:00'".format(previous_day.year, previous_day.month, previous_day.day)
     previous_day_query = arcpy.AddFieldDelimiters(table, "Date_") + " = " + previous_day_date
@@ -69,7 +69,7 @@ def calculate_harris_table(table, county_summary, day):
     print("        Recovered_Change")
     arcpy.CalculateField_management('table_tv', "Recovered_Change", str(recovered_change))
 
-    # Compose date query of three days before the execution date (for the previous tests data)
+    # Compose date query of two days before the execution date (for the previous tests data)
     previous_2_day = day - datetime.timedelta(2)
     previous_2_day_date = "'{:02d}-{:02d}-{:02d} 00:00:00'".format(previous_2_day.year, previous_2_day.month, previous_2_day.day)
     previous_2_day_query = arcpy.AddFieldDelimiters(table, "Date_") + " = " + previous_2_day_date
@@ -90,7 +90,7 @@ def calculate_harris_table(table, county_summary, day):
     print("        Positivity_Daily")
     arcpy.CalculateField_management('table_tv', "Positivity_Daily", "100 * [Confirmed_Change] / [Tests_Change]")
 
-    # Compose date query of the 14-day period from 2 weeks before the execution date to the previous day of the execution date
+    # Compose date query of the 14-day period from 13 days before the execution date to the execution date
     past_2_weeks_day = day - datetime.timedelta(13)
     past_2_weeks_day_date = "'{:02d}-{:02d}-{:02d} 00:00:00'".format(past_2_weeks_day.year, past_2_weeks_day.month, past_2_weeks_day.day)
     past_2_weeks_query = arcpy.AddFieldDelimiters(table, "Date_") + " BETWEEN " + past_2_weeks_day_date + " AND " + this_day_date
@@ -161,14 +161,14 @@ def main():
     arcpy.env.workspace = r"Database Connections\Global_SDE_(Global_Admin).sde"
     arcpy.env.overwriteOutput = True
 
-    yesterday = datetime.datetime.today() - datetime.timedelta(1)
+    today = datetime.datetime.today()
 
     county_summary = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Info\Global.GLOBAL_ADMIN.HGAC_Counties_COVID_19_Cases"
 
     # Copy data from HGAC_Counties_COVID_19_Cases to HGAC_COVID_19_Harris_County_Info, and calculate fatality rate, positivity rates, changes in cases, tests, and 7-day averages of changes in cases and positivity rate
     print("    HGAC_COVID_19_Harris_County_Info")
     harris_info_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Harris_County_Info"
-    calculate_harris_table(harris_info_table, county_summary, yesterday)
+    calculate_harris_table(harris_info_table, county_summary, today)
 
 if __name__ == "__main__":
     start_time = datetime.datetime.now()
