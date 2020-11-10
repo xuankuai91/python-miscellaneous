@@ -35,7 +35,7 @@ def calculate_change(table, day):
     arcpy.CalculateField_management('table_tv', "Mov_Avg", str(moving_average))
 
 def calculate_positivities(table, day):
-    print("            Positivity")
+    print("                Positivity")
     # Compose date query of the day before the execution date (for the latest cases data)
     this_day_query = earcpy.compose_single_date_query(table, "Date_", day, "=")
 
@@ -43,7 +43,7 @@ def calculate_positivities(table, day):
     arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", this_day_query)
     arcpy.CalculateField_management('table_tv', "Positivity", "100 * [Total] / [Tests]")
 
-    print("            Positivity_Mov_Avg")
+    print("                Positivity_Mov_Avg")
     # Compose date query of the 7-day period from 1 week before the previous day of the execution date to two days before the execution date
     past_week_query = earcpy.compose_double_date_query(table, "Date_", end_day=day, period=7)
 
