@@ -1,23 +1,23 @@
 import arcpy, datetime
 
 def main():
-    arcpy.env.workspace = r"Database Connections\Global_SDE_(Global_Admin).sde"
+    workspace = r"Database Connections\Global_SDE_(Global_Admin).sde"
+    arcpy.env.workspace = workspace
     arcpy.env.overwriteOutput = True
 
-    print("    Calculating COVID-19 hospitalization data of Trauma Service Area Q ...")
-    print("        HGAC_COVID_19_TSA_Q_Info ...")
+    print("    HGAC_COVID_19_TSA_Q_Info")
     tsa_q = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_TSA_Q_Info"
 
-    print("            Total_Occupied")
+    print("        Total_Occupied")
     arcpy.CalculateField_management(tsa_q, "Total_Occupied", "[Total] - [Available]")
 
-    print("            Occupied_Total_Percentage")
+    print("        Occupied_Total_Percentage")
     arcpy.CalculateField_management(tsa_q, "Occupied_Total_Percentage", "100 * [Total_Occupied] / [Total]")
 
-    print("            COVID_Total_Percentage")
+    print("        COVID_Total_Percentage")
     arcpy.CalculateField_management(tsa_q, "COVID_Total_Percentage", "100 * [COVID_Occupied] / [Total]")
 
-    print("            COVID_Occupied_Percentage")
+    print("        COVID_Occupied_Percentage")
     arcpy.CalculateField_management(tsa_q, "COVID_Occupied_Percentage", "100 * [COVID_Occupied] / [Total_Occupied]")
 
 if __name__ == "__main__":
