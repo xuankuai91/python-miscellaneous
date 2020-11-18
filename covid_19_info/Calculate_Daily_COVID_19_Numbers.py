@@ -32,16 +32,16 @@ def copy_case_counts(table, fields, county_summary, day):
         if county_name == "Fort Bend":
             county_name = "Fort_Bend"
 
-        print("            " + county_name)
+        print("        " + county_name)
         arcpy.CalculateField_management('table_tv', county_name, str(value))
     
 
 def calculate_change(table, day):
     # Calculate total number of cases
-    print("            Total")
+    print("        Total")
     arcpy.CalculateField_management(table, "Total", "[Austin] + [Brazoria] + [Chambers] + [Colorado] + [Fort_Bend] + [Galveston] + [Harris] + [Liberty] + [Matagorda] + [Montgomery] + [Walker] + [Waller] + [Wharton]")
 
-    print("            Change")
+    print("        Change")
 
     # Compose date query of the day before the execution date (for the latest cases data)
     this_day_query = earcpy.compose_single_date_query(table, "Date_", day, "=")
@@ -58,7 +58,7 @@ def calculate_change(table, day):
 
     arcpy.CalculateField_management('table_tv', "Change", str(change))
     
-    print("            Mov_Avg")
+    print("        Mov_Avg")
 
     # Compose date query of the 7-day period from a week before the execution date to the previous day of the execution date
     past_week_query = earcpy.compose_double_date_query(table, "Date_", end_day=day, period=7)
@@ -70,7 +70,7 @@ def calculate_change(table, day):
     arcpy.CalculateField_management('table_tv', "Mov_Avg", str(moving_average))
 
 def calculate_test_count(table, county_summary, day):
-    print("            Tests")
+    print("        Tests")
     county_cursor = arcpy.da.SearchCursor(county_summary, ["No_of_Tests"])
 
     test_list = [county_row[0] for county_row in county_cursor]
@@ -86,7 +86,7 @@ def calculate_test_count(table, county_summary, day):
     arcpy.CalculateField_management('table_tv', "Tests", str(total_tests))
 
 def calculate_positivities(table, county_summary, day):
-    print("            Positivity")
+    print("        Positivity")
     # Compose date query of the day before the execution date (for the latest cases data)
     previous_day = day - datetime.timedelta(1)
     previous_day_query = earcpy.compose_single_date_query(table, "Date_", previous_day, "=")
@@ -95,7 +95,7 @@ def calculate_positivities(table, county_summary, day):
     arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", previous_day_query)
     arcpy.CalculateField_management('table_tv', "Positivity", "100 * [Total] / [Tests]")
 
-    print("            Positivity_Mov_Avg")
+    print("        Positivity_Mov_Avg")
     # Compose date query of two days before the execution date (for the previous tests data)
     previous_2_day = day - datetime.timedelta(2)
     previous_2_day_query = earcpy.compose_single_date_query(table, "Date_", previous_2_day, "=")
@@ -120,43 +120,43 @@ def calculate_table(table, fields, county_summary, day):
     calculate_change(table, day)
 
 def main():
-    arcpy.env.workspace = r"Database Connections\Global_SDE_(Global_Admin).sde"
+    workspace = r"Database Connections\Global_SDE_(Global_Admin).sde"
+    arcpy.env.workspace = workspace
     arcpy.env.overwriteOutput = True
 
-    print("    Calculating COVID-19 case data ...")
     yesterday = datetime.datetime.today() - datetime.timedelta(1)
 
-    print("        HGAC_Counties_COVID_19_Cases")
+    print("    HGAC_Counties_COVID_19_Cases")
     county_summary = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Info\Global.GLOBAL_ADMIN.HGAC_Counties_COVID_19_Cases"
 
-    print("            No_of_Cases")
+    print("        No_of_Cases")
     arcpy.CalculateField_management(county_summary, "No_of_Cases", "[No_of_Actives] + [No_of_Deaths] + [No_of_Recoveries]") # Calculate total number of cases
 
-    print("            Positivity")
+    print("        Positivity")
     arcpy.CalculateField_management(county_summary, "Positivity", "100 * [No_of_Cases] / [No_of_Tests]") # Calculate total positivity
 
-    print("            Tested_Percentage")
+    print("        Tested_Percentage")
     arcpy.CalculateField_management(county_summary, "Tested_Percentage", "100 * [No_of_Tests] / [Population]") # Calculate percentage of tested population
 
     # Copy data from HGAC_Counties_COVID_19_Cases to HGAC_COVID_19_Confirmed_Cases_and_Tests, and calculate total, change, and 7-day average
-    print("        HGAC_COVID_19_Confirmed_Cases_and_Tests")
+    print("    HGAC_COVID_19_Confirmed_Cases_and_Tests")
     confirmed_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Confirmed_Cases_and_Tests"
     calculate_table(confirmed_table, ["NAME", "No_of_Cases"], county_summary, yesterday)
     calculate_test_count(confirmed_table, county_summary, yesterday)
     calculate_positivities(confirmed_table, county_summary, yesterday)
 
     # Copy data from HGAC_Counties_COVID_19_Cases to HGAC_COVID_19_Active_Cases, and calculate total, change, and 7-day average
-    print("        HGAC_COVID_19_Active_Cases")
+    print("    HGAC_COVID_19_Active_Cases")
     active_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Active_Cases"
     calculate_table(active_table, ["NAME", "No_of_Actives"], county_summary, yesterday)
 
     # Copy data from HGAC_Counties_COVID_19_Cases to HGAC_COVID_19_Deceased_Cases, and calculate total, change, and 7-day average
-    print("        HGAC_COVID_19_Deceased_Cases")
+    print("    HGAC_COVID_19_Deceased_Cases")
     deceased_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Deceased_Cases"
     calculate_table(deceased_table, ["NAME", "No_of_Deaths"], county_summary, yesterday)
 
     # Copy data from HGAC_Counties_COVID_19_Cases to HGAC_COVID_19_Recovered_Cases, and calculate total, change, and 7-day average
-    print("        HGAC_COVID_19_Recovered_Cases")
+    print("    HGAC_COVID_19_Recovered_Cases")
     recovered_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Recovered_Cases"
     calculate_table(recovered_table, ["NAME", "No_of_Recoveries"], county_summary, yesterday)
 
