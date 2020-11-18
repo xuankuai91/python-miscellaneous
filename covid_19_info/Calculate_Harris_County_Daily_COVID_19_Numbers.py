@@ -25,26 +25,26 @@ def calculate_harris_table(table, county_summary, day):
     arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", this_day_query)
 
     # Copy the latest cases data from HGAC_Counties_COVID_19_Cases to HGAC_COVID_19_Harris_County_Info
-    print("            Confirmed")
+    print("        Confirmed")
     arcpy.CalculateField_management('table_tv', "Confirmed", str(confirmed_cases))
 
-    print("            Active")
+    print("        Active")
     arcpy.CalculateField_management('table_tv', "Active", str(active_cases))
 
-    print("            Deceased")
+    print("        Deceased")
     arcpy.CalculateField_management('table_tv', "Deceased", str(deceased_cases))
 
-    print("            Recovered")
+    print("        Recovered")
     arcpy.CalculateField_management('table_tv', "Recovered", str(recovered_cases))
 
     # Calculate fatality rate
-    print("            Fatality_Rate")
+    print("        Fatality_Rate")
     arcpy.CalculateField_management('table_tv', "Fatality_Rate", "100 * [Deceased] / [Confirmed]")
 
     arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", previous_day_query)
 
     # Copy the latest tests data from HGAC_Counties_COVID_19_Cases to HGAC_COVID_19_Harris_County_Info
-    print("            Tests")
+    print("        Tests")
     arcpy.CalculateField_management('table_tv', "Tests", str(tests))
 
     # Calculate changes in cases
@@ -55,16 +55,16 @@ def calculate_harris_table(table, county_summary, day):
 
     arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", this_day_query)
 
-    print("            Confirmed_Change")
+    print("        Confirmed_Change")
     arcpy.CalculateField_management('table_tv', "Confirmed_Change", str(confirmed_change))
 
-    print("            Active_Change")
+    print("        Active_Change")
     arcpy.CalculateField_management('table_tv', "Active_Change", str(active_change))
 
-    print("            Deceased_Change")
+    print("        Deceased_Change")
     arcpy.CalculateField_management('table_tv', "Deceased_Change", str(deceased_change))
 
-    print("            Recovered_Change")
+    print("        Recovered_Change")
     arcpy.CalculateField_management('table_tv', "Recovered_Change", str(recovered_change))
 
     # Compose date query of two days before the execution date (for the previous tests data)
@@ -76,13 +76,13 @@ def calculate_harris_table(table, county_summary, day):
 
     arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", previous_day_query)
 
-    print("            Tests_Change")
+    print("        Tests_Change")
     arcpy.CalculateField_management('table_tv', "Tests_Change", str(tests_change))
 
-    print("            Positivity")
+    print("        Positivity")
     arcpy.CalculateField_management('table_tv', "Positivity", "100 * [Confirmed] / [Tests]")
 
-    print("            Positivity_Daily")
+    print("        Positivity_Daily")
     arcpy.CalculateField_management('table_tv', "Positivity_Daily", "100 * [Confirmed_Change] / [Tests_Change]")
 
     # Compose date query of the 14-day period from 13 days before the execution date to the execution date
@@ -99,19 +99,19 @@ def calculate_harris_table(table, county_summary, day):
 
     arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", this_day_query)
 
-    print("            Confirmed_Mov_Avg")
+    print("        Confirmed_Mov_Avg")
     arcpy.CalculateField_management('table_tv', "Confirmed_Mov_Avg", str(confirmed_moving_average))
 
-    print("            Active_Mov_Avg")
+    print("        Active_Mov_Avg")
     arcpy.CalculateField_management('table_tv', "Active_Mov_Avg", str(active_moving_average))
 
-    print("            Deceased_Mov_Avg")
+    print("        Deceased_Mov_Avg")
     arcpy.CalculateField_management('table_tv', "Deceased_Mov_Avg", str(deceased_moving_average))
 
-    print("            Recovered_Mov_Avg")
+    print("        Recovered_Mov_Avg")
     arcpy.CalculateField_management('table_tv', "Recovered_Mov_Avg", str(recovered_moving_average))
 
-    print("            Positivity_Mov_Avg")
+    print("        Positivity_Mov_Avg")
     # Compose date query of the 14-day period from 2 weeks before the previous day of the execution date to two days before the execution date
     previous_2_weeks_query = earcpy.compose_double_date_query(table, "Date_", end_day=previous_day, period=14)
     confirmed_change_list_previous_day = earcpy.list_values(table, "Confirmed_Change", previous_2_weeks_query)
@@ -122,16 +122,16 @@ def calculate_harris_table(table, county_summary, day):
     arcpy.CalculateField_management('table_tv', "Positivity_Mov_Avg", str(positivity_moving_average))
 
 def main():
-    arcpy.env.workspace = r"Database Connections\Global_SDE_(Global_Admin).sde"
+    workspace = r"Database Connections\Global_SDE_(Global_Admin).sde"
+    arcpy.env.workspace = workspace
     arcpy.env.overwriteOutput = True
 
-    print("    Calculating COVID-19 data of Harris County ...")
     today = datetime.datetime.today()
 
     county_summary = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Info\Global.GLOBAL_ADMIN.HGAC_Counties_COVID_19_Cases"
 
     # Copy data from HGAC_Counties_COVID_19_Cases to HGAC_COVID_19_Harris_County_Info, and calculate fatality rate, positivity rates, changes in cases, tests, and 7-day averages of changes in cases and positivity rate
-    print("        HGAC_COVID_19_Harris_County_Info")
+    print("    HGAC_COVID_19_Harris_County_Info")
     harris_info_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Harris_County_Info"
     calculate_harris_table(harris_info_table, county_summary, today)
 
