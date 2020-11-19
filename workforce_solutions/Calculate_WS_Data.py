@@ -5,13 +5,13 @@ def prepare_claimants_layer():
     print("        Correcting addresses ...")
     claimants_temp = "Claimants_" + start_date + "_" + end_date + "_temp"
 
-    arcpy.CalculateField_management(claimants_temp, "Address", "[ShortLabel]")
+    arcpy.DeleteField_management(claimants_temp, "Address")
 
     print("        Copying feature class to UI_Claimants_" + start_date + "_" + end_date + " ...")
     print("            Creating field map ...")
     field_mappings = arcpy.FieldMappings()
 
-    fields = ["ID", "Address", "City_1", "CountyName", "State_1", "Zip_Code", "Age", "Age_Range", "Gender", "Race", "EducationalAttainment", "Filing_Date", "Industry", "Standard_Occupational_Classification", "Program_Code", "Veteran", "F2_Digit_NAICS", "F2_Digit_NAICS_Title", "F3_Digit_NAICS", "F3_Digit_NAICS_Title", "F4_Digit_NAICS", "F4_Digit_NAICS_Title"]
+    fields = ["ID", "City_1", "CountyName", "State_1", "Zip_Code", "Age_Range", "Gender", "Race", "EducationalAttainment", "Filing_Date", "Industry", "Standard_Occupational_Classification", "Program_Code", "Veteran", "F2_Digit_NAICS", "F2_Digit_NAICS_Title"]
 
     for field in fields:
         try:
@@ -139,7 +139,7 @@ def finalize_claimants_layer():
     hgac_ui_claimants = "HGAC_UI_Claimants"
     arcpy.FeatureClassToFeatureClass_conversion(ui_claimants, r"\\Hgac.net\FileShare\ArcGIS\DataSvcs\GIS\Requests\Workforce\UI_Claims\Default.gdb", hgac_ui_claimants)
 
-def summarize_counts():
+def summarize_count():
     print("    Summarizing claimant counts ...")
 
     # Summarize claimant counts for USCB_Texas_Counties_Political
@@ -179,30 +179,20 @@ def summarize_counts():
     arcpy.Statistics_analysis("Claimants_TxDOT_Texas_US_House_Districts", "Sum_TxDOT_Texas_US_House_Districts", "ID COUNT", "DIST_NBR")
 
 
-def copy_counts():
+def copy_count():
     print("    Copying claimant counts to administrative layers ...")
 
     # Copy claimant counts to HGAC_Counties_UI_Claims
     print("        HGAC_Counties_UI_Claims")
     arcpy.MakeFeatureLayer_management(r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_Counties_UI_Claims", 'counties_fl')
-
-    print("            Joining ...")
     arcpy.AddJoin_management('counties_fl', "NAME", "Sum_USCB_Texas_Counties_Political", "NAME")
-
-    print("            Copying counts ...")
     arcpy.CalculateField_management('counties_fl', "Global.GLOBAL_ADMIN.HGAC_Counties_UI_Claims.UICount", "[Sum_USCB_Texas_Counties_Political.COUNT_ID]")
-
-    print("            Removing join ...")
     arcpy.RemoveJoin_management('counties_fl')
 
     # Copy claimant counts to HGAC_ZIP_Codes_UI_Claims
     print("        HGAC_ZIP_Codes_UI_Claims")
     arcpy.MakeFeatureLayer_management(r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_ZIP_Codes_UI_Claims", 'zip_fl')
-
-    print("            Joining ...")
     arcpy.AddJoin_management('zip_fl', "Zip_Code", "Sum_USCB_Texas_Zip_Codes_2010", "ZCTA5CE10")
-
-    print("            Copying counts ...")
     arcpy.CalculateField_management('zip_fl', "Global.GLOBAL_ADMIN.HGAC_ZIP_Codes_UI_Claims.UICount", "[Sum_USCB_Texas_Zip_Codes_2010.COUNT_ID]")
 
     print("            Filling null values ...")
@@ -213,11 +203,7 @@ def copy_counts():
     # Copy claimant counts to HGAC_School_Districts_UI_Claims
     print("        HGAC_School_Districts_UI_Claims")
     arcpy.MakeFeatureLayer_management(r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_School_Districts_UI_Claims", 'school_dist_fl')
-
-    print("            Joining ...")
     arcpy.AddJoin_management('school_dist_fl', "ISD_ID", "Sum_TEA_Texas_School_Districts", "SDLEA10")
-
-    print("            Copying counts ...")
     arcpy.CalculateField_management('school_dist_fl', "Global.GLOBAL_ADMIN.HGAC_School_Districts_UI_Claims.UICount", "[Sum_TEA_Texas_School_Districts.COUNT_ID]")
 
     print("            Filling null values ...")
@@ -228,24 +214,14 @@ def copy_counts():
     # Copy claimant counts to HGAC_CoH_Council_Districts_UI_Claims
     print("        HGAC_CoH_Council_Districts_UI_Claims")
     arcpy.MakeFeatureLayer_management(r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_CoH_Council_Districts_UI_Claims", 'coh_council_fl')
-
-    print("            Joining ...")
     arcpy.AddJoin_management('coh_council_fl', "DISTRICT", "Sum_CoH_Council_Districts", "DISTRICT")
-
-    print("            Copying counts ...")
     arcpy.CalculateField_management('coh_council_fl', "Global.GLOBAL_ADMIN.HGAC_CoH_Council_Districts_UI_Claims.UICount", "[Sum_CoH_Council_Districts.COUNT_ID]")
-
-    print("            Removing join ...")
     arcpy.RemoveJoin_management('coh_council_fl')
 
     # Copy claimant counts to HGAC_Commissioner_Precincts_UI_Claims
     print("        HGAC_Commissioner_Precincts_UI_Claims")
     arcpy.MakeFeatureLayer_management(r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_Commissioner_Precincts_UI_Claims", 'commissioner_fl')
-
-    print("            Joining ...")
     arcpy.AddJoin_management('commissioner_fl', "Commission", "Sum_HGAC_Commissioner_Precincts", "Commission")
-
-    print("            Copying counts ...")
     arcpy.CalculateField_management('commissioner_fl', "Global.GLOBAL_ADMIN.HGAC_Commissioner_Precincts_UI_Claims.UICount", "[Sum_HGAC_Commissioner_Precincts.COUNT_ID]")
 
     print("            Filling null values ...")
@@ -256,11 +232,7 @@ def copy_counts():
     # Copy claimant counts to HGAC_State_House_Districts_UI_Claims
     print("        HGAC_State_House_Districts_UI_Claims")
     arcpy.MakeFeatureLayer_management(r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_State_House_Districts_UI_Claims", 'state_house_fl')
-
-    print("            Joining ...")
     arcpy.AddJoin_management('state_house_fl', "DIST_NBR", "Sum_TxDOT_Texas_State_House_Districts", "DIST_NBR_STR")
-
-    print("            Copying counts ...")
     arcpy.CalculateField_management('state_house_fl', "Global.GLOBAL_ADMIN.HGAC_State_House_Districts_UI_Claims.UICount", "[Sum_TxDOT_Texas_State_House_Districts.COUNT_ID]")
 
     print("            Filling null values ...")
@@ -271,27 +243,15 @@ def copy_counts():
     # Copy claimant counts to HGAC_State_Senate_Districts_UI_Claims
     print("        HGAC_State_Senate_Districts_UI_Claims")
     arcpy.MakeFeatureLayer_management(r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_State_Senate_Districts_UI_Claims", 'state_senate_fl')
-
-    print("            Joining ...")
     arcpy.AddJoin_management('state_senate_fl', "DIST_NBR", "Sum_TxDOT_Texas_State_Senate_Districts", "DIST_NBR_STR")
-
-    print("            Copying counts ...")
     arcpy.CalculateField_management('state_senate_fl', "Global.GLOBAL_ADMIN.HGAC_State_Senate_Districts_UI_Claims.UICount", "[Sum_TxDOT_Texas_State_Senate_Districts.COUNT_ID]")
-
-    print("            Removing join ...")
     arcpy.RemoveJoin_management('state_senate_fl')
 
     # Copy claimant counts to HGAC_US_House_Districts_UI_Claims
     print("        HGAC_US_House_Districts_UI_Claims")
     arcpy.MakeFeatureLayer_management(r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_US_House_Districts_UI_Claims", 'us_house_fl')
-
-    print("            Joining ...")
     arcpy.AddJoin_management('us_house_fl', "CD116FP", "Sum_TxDOT_Texas_US_House_Districts", "DIST_NBR")
-
-    print("            Copying counts ...")
     arcpy.CalculateField_management('us_house_fl', "Global.GLOBAL_ADMIN.HGAC_US_House_Districts_UI_Claims.UICount", "[Sum_TxDOT_Texas_US_House_Districts.COUNT_ID]")
-
-    print("            Removing join ...")
     arcpy.RemoveJoin_management('us_house_fl')
 
 def main():
@@ -301,8 +261,8 @@ def main():
     prepare_claimants_layer()
     spatially_join()
     finalize_claimants_layer()
-    summarize_counts()
-    copy_counts()
+    summarize_count()
+    copy_count()
 
 if __name__ == "__main__":
     start_time = datetime.datetime.now()
