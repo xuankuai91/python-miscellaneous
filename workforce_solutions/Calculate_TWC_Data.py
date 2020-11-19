@@ -10,11 +10,9 @@ def main():
     county_twc = r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_Workforce_Solutions\Global.GLOBAL_ADMIN.HGAC_Counties_UI_Claims_TWC"
     county_fields = ["UICount", "NAICS1", "NAICSTitle1", "NAICS1Count", "NAICS2", "NAICSTitle2", "NAICS2Count","NAICS3", "NAICSTitle3", "NAICS3Count","NAICS4", "NAICSTitle4", "NAICS4Count","NAICS5", "NAICSTitle5", "NAICS5Count", "Male", "Female", "GenderUnknown", "Week1", "Week2", "Week3", "Week4", "Week5", "BeginDate", "EndDate"]
     arcpy.MakeFeatureLayer_management(county_twc, 'county_twc_layer')
-
-    print("        Joining county data ...")
     arcpy.AddJoin_management('county_twc_layer', 'NAME', 'ui_by_county.csv', 'AreaName')
 
-    print("        Calculating fields ...")
+    print("        Copying attributes ...")
     for field in county_fields:
         arcpy.CalculateField_management("county_twc_layer", "Global.GLOBAL_ADMIN.HGAC_Counties_UI_Claims_TWC." + field, "[ui_by_county.csv." + field + "]")
         print("            " + field)
@@ -27,11 +25,9 @@ def main():
     zip_twc = r"Database Connections\Global_SDE_(Global_Admin).sde\Global.GLOBAL_ADMIN.HGAC_Workforce_Solutions\Global.GLOBAL_ADMIN.HGAC_ZIP_Codes_UI_Claims_TWC"
     zip_fields = ["UICount", "Male", "Female", "GenderUnknown", "Week1", "Week2", "Week3", "Week4", "Week5", "BeginDate", "EndDate"]
     arcpy.MakeFeatureLayer_management(zip_twc, 'zip_twc_layer')
-
-    print("        Joining ZIP Code area data ...")
     arcpy.AddJoin_management('zip_twc_layer', 'Zip_Code', 'ui_by_zipcode.xlsx\ui_by_zipcode$', 'ZIP_CODE')
 
-    print("        Calculating fields ...")
+    print("        Copying attributes ...")
     for field in zip_fields:
         arcpy.CalculateField_management("zip_twc_layer", "Global.GLOBAL_ADMIN.HGAC_ZIP_Codes_UI_Claims_TWC." + field, "[ui_by_zipcode$." + field + "]")
         print("            " + field)
