@@ -138,7 +138,7 @@ def main():
 if __name__ == "__main__":
     start_time = datetime.datetime.now()
 
-    print("Starting Calculate Harris County Daily COVID-19 Numbers tool")
+    print("Starting Calculate Harris County Daily COVID-19 Numbers tool ...")
     print("Version 1.2")
     print("Last update: 10/20/2020")
     print("Support: Xuan.Kuai@h-gac.com" + "\n")
