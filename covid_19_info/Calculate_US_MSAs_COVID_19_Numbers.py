@@ -453,7 +453,7 @@ def main():
 if __name__ == "__main__":
     start_time = datetime.datetime.now()
 
-    print("Starting Calculate US MSAs COVID-19 Numbers tool")
+    print("Starting Calculate US MSAs COVID-19 Numbers tool ...")
     print("Version 1.0")
     print("Last update: 1/21/2021")
     print("Support: Xuan.Kuai@h-gac.com" + "\n")
