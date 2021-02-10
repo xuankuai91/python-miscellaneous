@@ -1,6 +1,29 @@
-import arcpy, datetime, sys
+import arcpy, datetime, sys, urllib, json
 sys.path.append(r'\\Hgac.net\FileShare\ArcGIS\DataSvcs\GIS\Process Automation\Modules\Bin')
 import earcpy
+
+def fetch_fbcph_case_counts(table, date):
+    print("            Fort Bend")
+    query = "{} = 'Fort Bend'".format(arcpy.AddFieldDelimiters(table, "NAME"))
+    arcpy.MakeTableView_management(table, 'table_tv')
+    arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", query)
+
+    # Fetch case data from DSHS
+    url = "https://services6.arcgis.com/Lpf5uekGKCMMIEUK/ArcGIS/rest/services/Cases_current/FeatureServer/0/query?where=1%3D1&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&resultType=none&distance=0.0&units=esriSRUnit_Meter&returnGeodetic=false&outFields=*&returnGeometry=false&returnCentroid=false&featureEncoding=esriDefault&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=&datumTransformation=&applyVCSProjection=false&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnQueryGeometry=false&returnDistinctValues=false&cacheHint=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&returnExceededLimitFeatures=true&quantizationParameters=&sqlFormat=none&f=pjson&token="
+    response = urllib.urlopen(url)
+    data = json.loads(response.read())
+
+    cases = data["features"][0]["attributes"]["confirmed"]
+    fatalities = data["features"][0]["attributes"]["deaths"]
+    recoveries = data["features"][0]["attributes"]["recovered"]
+    actives = cases - fatalities - recoveries
+
+    arcpy.CalculateField_management('table_tv', "No_of_Cases", str(cases))
+    arcpy.CalculateField_management('table_tv', "No_of_Actives", str(actives))
+    arcpy.CalculateField_management('table_tv', "No_of_Deaths", str(fatalities))
+    arcpy.CalculateField_management('table_tv', "No_of_Recoveries", str(recoveries))
+
+    arcpy.CalculateField_management('table_tv', "Last_Updated", date)
 
 def copy_case_counts(table, fields, county_summary, day):
     try:
@@ -129,6 +152,10 @@ def main():
     print("    HGAC_Counties_COVID_19_Cases")
     county_summary = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Info\Global.GLOBAL_ADMIN.HGAC_Counties_COVID_19_Cases"
 
+    if yesterday.strftime('%w') in ("0", "1", "2", "3", "4"): # Update Chambers County and Montgomery County cases on weekdays only
+        print("        No_of_Cases, No_of_Actives, No_of_Deaths, No_of_Recoveries")
+        fetch_fbcph_case_counts(county_summary, "{}/{}/{}".format(yesterday.year, yesterday.month, yesterday.day))
+
     print("        No_of_Cases")
     arcpy.CalculateField_management(county_summary, "No_of_Cases", "[No_of_Actives] + [No_of_Deaths] + [No_of_Recoveries]") # Calculate total number of cases
 
@@ -163,7 +190,7 @@ def main():
 if __name__ == "__main__":
     start_time = datetime.datetime.now()
 
-    print("Starting Calculate Daily COVID-19 Numbers tool")
+    print("Starting Calculate Daily COVID-19 Numbers tool ...")
     print("Version 1.4")
     print("Last update: 10/20/2020")
     print("Support: Xuan.Kuai@h-gac.com" + "\n")
