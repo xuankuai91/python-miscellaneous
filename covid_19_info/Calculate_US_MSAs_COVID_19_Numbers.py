@@ -174,7 +174,6 @@ def import_dallas_numbers(table, day):
     print("    Copying counts ...")
     copy_counts(table, day, "Dallas", total_confirmed, total_deceased)
 
-
 def import_houston_numbers(table, day):
     # Fetch H-GAC counties' confirmed and deceased case numbers from SDE and add up for Houston MSA
     print("    Importing Houston MSA numbers ...")
