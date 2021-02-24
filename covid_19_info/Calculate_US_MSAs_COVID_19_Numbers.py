@@ -21,10 +21,10 @@ def copy_counts(table, day, msa, total_confirmed, total_deceased):
     arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", this_day_query)
 
     # Copy the total confirmed and deceased case numbers to HGAC_COVID_19_US_MSAs_Confirmed_and_Deceased_Cases
-    print("        Confirmed")
+    print("        " + msa + "_Total_Confirmed")
     arcpy.CalculateField_management('table_tv', msa + "_Total_Confirmed", str(total_confirmed))
 
-    print("        Deceased")
+    print("        " + msa + "_Total_Deceased")
     arcpy.CalculateField_management('table_tv', msa + "_Total_Deceased", str(total_deceased))
 
 def import_atlanta_numbers(table, day):
@@ -387,25 +387,27 @@ def calculate_stats(table, day):
         print("        " + msa)
 
         # Calculate changes in cases
-        print("            Confirmed")
+        print("            " + msa + "_Confirmed_Change")
         confirmed_change = earcpy.calculate_difference(table, msa + "_Total_Confirmed", this_day_query, previous_day_query)
         arcpy.CalculateField_management('table_tv', msa + "_Confirmed_Change", str(confirmed_change))
 
-        print("            Deceased")
+        print("            " + msa + "_Total_Deceased")
         deceased_change = earcpy.calculate_difference(table, msa + "_Total_Deceased", this_day_query, previous_day_query)
         arcpy.CalculateField_management('table_tv', msa + "_Deceased_Change", str(deceased_change))
 
         # Calculate 7-day average changes in cases
+        print("            " + msa + "_Confirmed_Mov_Avg")
         confirmed_change_list = earcpy.list_values(table, msa + "_Confirmed_Change", past_week_query)
         confirmed_moving_average = float(sum(confirmed_change_list)) / len(confirmed_change_list)
         arcpy.CalculateField_management('table_tv', msa + "_Confirmed_Mov_Avg", str(confirmed_moving_average))
 
+        print("            " + msa + "_Deceased_Mov_Avg")
         deceased_change_list = earcpy.list_values(table, msa + "_Deceased_Change", past_week_query)
         deceased_moving_average = float(sum(deceased_change_list)) / len(deceased_change_list)
         arcpy.CalculateField_management('table_tv', msa + "_Deceased_Mov_Avg", str(deceased_moving_average))
 
         # Calculate fatality rate
-        print("            Fatality rate")
+        print("            " + msa + "_Fatality_Rate")
         arcpy.CalculateField_management('table_tv', msa + "_Fatality_Rate", "100 * [{}_Total_Deceased] / [{}_Total_Confirmed]".format(msa, msa))
 
 def main():
