@@ -349,7 +349,7 @@ def import_washington_numbers(table, day):
     
     # Copy Virginia counties' numbers
     print("        Virginia")
-    counties = ["Arlington", "Clarke", "Culpeper", "Fairfax", "Fauquier", "Loudoun", "Prince William", "Rappahannock", "Spotsylvania", "Stafford"]
+    counties = ["Arlington", "Clarke", "Culpeper", "Fairfax", "Fauquier", "Loudoun", "Prince William", "Rappahannock", "Spotsylvania", "Stafford", "Warren"]
     for county in counties:
         print("            " + county)
         confirmed, deceased = fetch_jhu_numbers(county, "Virginia")
@@ -417,18 +417,14 @@ def main():
     yesterday = datetime.datetime.today() - datetime.timedelta(1)
     table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_US_MSAs_Confirmed_and_Deceased_Cases"
 
-    try:
-        # Insert a new row to table
-        target_cursor = arcpy.InsertCursor(table)
-        target_row = target_cursor.newRow()
+    # Insert a new row to table
+    target_cursor = arcpy.InsertCursor(table)
+    target_row = target_cursor.newRow()
 
-        # Write date of the day before the execution date
-        date = "{}/{}/{}".format(yesterday.year, yesterday.month, yesterday.day)
-        target_row.setValue("Date_", date)
-        target_cursor.insertRow(target_row)
-
-    except:
-        pass
+    # Write date of the day before the execution date
+    date = "{}/{}/{}".format(yesterday.year, yesterday.month, yesterday.day)
+    target_row.setValue("Date_", date)
+    target_cursor.insertRow(target_row)
 
     # Import confirmed and deceased case numbers of the counties in each MSA and calculate the sums
     import_atlanta_numbers(table, yesterday)
