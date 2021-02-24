@@ -20,21 +20,24 @@ def main():
 
     tsa_q = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_TSA_Q_Info"
 
-    print("        Inserting new row ...")
-    try:
-        # Insert a new row to table
-        cursor = arcpy.InsertCursor(tsa_q)
-        row = cursor.newRow()
+    # Insert a new row to table
+    cursor = arcpy.InsertCursor(tsa_q)
+    row = cursor.newRow()
 
-        # Write date and fetched values
-        row.setValue("Date_", date)
-        row.setValue("Total", total)
-        row.setValue("Available", available)
-        row.setValue("COVID_Occupied", covid_occupied)
-        cursor.insertRow(row)
+    # Write date and fetched values
+    print("        Date_")
+    row.setValue("Date_", date)
 
-    except:
-        pass
+    print("        Total")
+    row.setValue("Total", total)
+
+    print("        Available")
+    row.setValue("Available", available)
+
+    print("        COVID_Occupied")
+    row.setValue("COVID_Occupied", covid_occupied)
+
+    cursor.insertRow(row)
 
     # Calculate derived values
     print("        Total_Occupied")
@@ -54,7 +57,7 @@ if __name__ == "__main__":
 
     print("Starting Calculate TSA Q Daily COVID-19 Numbers tool ...")
     print("Version 1.2")
-    print("Last update: 9/18/2020")
+    print("Last update: 2/24/2021")
     print("Support: Xuan.Kuai@h-gac.com" + "\n")
     print("Start time: " + str(start_time) + "\n")
 
