@@ -61,7 +61,7 @@ def main():
     this_day_date = raw_input("    Please enter the date intended to revise (m/d/yyyy): ")
     this_day = datetime.datetime.strptime(this_day_date, "%m/%d/%Y")
     order_clause = (None, "ORDER BY Date_")
-
+    
     # Calculate changes in confirmed cases for the day intended to revise and the day before
     print("    HGAC_COVID_19_Confirmed_Cases_and_Tests")
     confirmed_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Confirmed_Cases_and_Tests"
@@ -70,22 +70,22 @@ def main():
     future_days_cursor = arcpy.da.SearchCursor(confirmed_table, ["Date_", "Total", "Change", "Mov_Avg"], future_days_query, sql_clause=order_clause)
     for future_days_row in future_days_cursor:
         current_day = future_days_row[0]
-        print("        " + str(current_day))
 
+        print("        " + str(current_day))
         calculate_change(confirmed_table, current_day)
         calculate_positivities(confirmed_table, current_day)
 
     # Reset the value of Positivity_Mov_Avg for the most current day to null
-    this_day_query = earcpy.compose_single_date_query(confirmed_table, "Date_", this_day, "=")
+    last_day_query = earcpy.compose_single_date_query(confirmed_table, "Date_", current_day, "=")
 
     arcpy.MakeTableView_management(confirmed_table, 'table_tv')
-    arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", this_day_query)
-    arcpy.CalculateField_management('table_tv', "Positivity_Mov_Avg", "NULL")    
+    arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", last_day_query)
+    arcpy.CalculateField_management('table_tv', "Positivity_Mov_Avg", "NULL")
 
     # Calculate changes in active cases for the day intended to revise and the day before
     print("    HGAC_COVID_19_Active_Cases")
     active_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Active_Cases"
-
+    
     future_days_query = earcpy.compose_single_date_query(active_table, "Date_", this_day, ">=")
     future_days_cursor = arcpy.da.SearchCursor(active_table, ["Date_", "Total", "Change", "Mov_Avg"], future_days_query, sql_clause=order_clause)
     for future_days_row in future_days_cursor:
@@ -97,7 +97,7 @@ def main():
     # Calculate changes in deceased cases for the day intended to revise and the day before
     print("    HGAC_COVID_19_Deceased_Cases")
     deceased_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Deceased_Cases"
-
+    
     future_days_query = earcpy.compose_single_date_query(deceased_table, "Date_", this_day, ">=")
     future_days_cursor = arcpy.da.SearchCursor(deceased_table, ["Date_", "Total", "Change", "Mov_Avg"], future_days_query, sql_clause=order_clause)
     for future_days_row in future_days_cursor:
@@ -109,7 +109,7 @@ def main():
     # Calculate changes in recovered cases for the day intended to revise and the day before
     print("    HGAC_COVID_19_Recovered_Cases")
     recovered_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Recovered_Cases"
-
+    
     future_days_query = earcpy.compose_single_date_query(recovered_table, "Date_", this_day, ">=")
     future_days_cursor = arcpy.da.SearchCursor(recovered_table, ["Date_", "Total", "Change", "Mov_Avg"], future_days_query, sql_clause=order_clause)
     for future_days_row in future_days_cursor:
