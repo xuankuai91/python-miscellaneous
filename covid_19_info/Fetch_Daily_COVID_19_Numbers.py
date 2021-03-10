@@ -17,14 +17,22 @@ def fetch_dshs_case_counts(table, county, date):
     cases = actives + fatalities + recoveries
 
     if county == "Waller": # Update number of deaths only for Waller County
-        arcpy.CalculateField_management('table_tv', "No_of_Deaths", str(fatalities))
+        cases = data["features"][0]["attributes"]["Positive"]
+        actives = data["features"][0]["attributes"]["Active"]
+        fatalities = data["features"][0]["attributes"]["Fatalities"]
+        recoveries = cases - actives - fatalities
     else:
-        arcpy.CalculateField_management('table_tv', "No_of_Cases", str(cases))
-        arcpy.CalculateField_management('table_tv', "No_of_Actives", str(actives))
-        arcpy.CalculateField_management('table_tv', "No_of_Deaths", str(fatalities))
-        arcpy.CalculateField_management('table_tv', "No_of_Recoveries", str(recoveries))
+        actives = data["features"][0]["attributes"]["Active"]
+        fatalities = data["features"][0]["attributes"]["Fatalities"]
+        recoveries = data["features"][0]["attributes"]["Recoveries"]
+        cases = actives + fatalities + recoveries
+    
+    arcpy.CalculateField_management('table_tv', "No_of_Cases", str(cases))
+    arcpy.CalculateField_management('table_tv', "No_of_Actives", str(actives))
+    arcpy.CalculateField_management('table_tv', "No_of_Deaths", str(fatalities))
+    arcpy.CalculateField_management('table_tv', "No_of_Recoveries", str(recoveries))
 
-        arcpy.CalculateField_management('table_tv', "Last_Updated", "cdate(date)")
+    arcpy.CalculateField_management('table_tv', "Last_Updated", "CDate(#{}#)".format(date))
 
 def fetch_hcph_case_counts(table, day, date):
     print("            Harris")
@@ -47,7 +55,7 @@ def fetch_hcph_case_counts(table, day, date):
     arcpy.CalculateField_management('table_tv', "No_of_Deaths", str(fatalities))
     arcpy.CalculateField_management('table_tv', "No_of_Recoveries", str(recoveries))
 
-    arcpy.CalculateField_management('table_tv', "Last_Updated", "cdate(date)")
+    arcpy.CalculateField_management('table_tv', "Last_Updated", "CDate(#{}#)".format(date))
 
 def fetch_ccph_case_counts(table, date):
     print("            Chambers")
@@ -91,7 +99,7 @@ def fetch_mcph_case_counts(table, date):
     arcpy.CalculateField_management('table_tv', "No_of_Deaths", str(fatalities))
     arcpy.CalculateField_management('table_tv', "No_of_Recoveries", str(recoveries))
 
-    arcpy.CalculateField_management('table_tv', "Last_Updated", "cdate(date)")
+    arcpy.CalculateField_management('table_tv', "Last_Updated", "CDate(#{}#)".format(date))
 
 def fetch_test_counts(table, county):
     print("            " + county)
