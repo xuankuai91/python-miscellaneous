@@ -186,6 +186,7 @@ def main():
         print("        " + str(current_day))
         revise_change(recovered_table, current_day)
 
+    # Copy changes to the national table
     print("    HGAC_COVID_19_US_MSAs_Confirmed_and_Deceased_Cases")
     msa_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_US_MSAs_Confirmed_and_Deceased_Cases"
 
