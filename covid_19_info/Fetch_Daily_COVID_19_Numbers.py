@@ -90,9 +90,9 @@ def fetch_mcph_case_counts(table, date):
     data = json.loads(response.read())
 
     cases = data["features"][0]["attributes"]["positive"]
+    actives = data["features"][0]["attributes"]["active"]
     fatalities = data["features"][0]["attributes"]["deaths"]
-    recoveries = data["features"][0]["attributes"]["recovered"]
-    actives = cases - fatalities - recoveries
+    recoveries = cases - actives - fatalities
 
     arcpy.CalculateField_management('table_tv', "No_of_Cases", str(cases))
     arcpy.CalculateField_management('table_tv', "No_of_Actives", str(actives))
