@@ -41,12 +41,12 @@ def fetch_hcph_case_counts(table, day, date):
     arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", query)
 
     # Fetch case data from DSHS
-    url = "https://services.arcgis.com/su8ic9KbA7PYVxPS/ArcGIS/rest/services/HCPHCovidDashboard/FeatureServer/1/query?where=Source%3D%27Combined%27+AND+DATE%3DTIMESTAMP+%27{}%2F{}%2F{}+6%3A00%3A00+AM%27&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&resultType=none&distance=0.0&units=esriSRUnit_Meter&returnGeodetic=false&outFields=*&returnGeometry=false&featureEncoding=esriDefault&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=&datumTransformation=&applyVCSProjection=false&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnQueryGeometry=false&returnDistinctValues=false&cacheHint=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&returnExceededLimitFeatures=true&quantizationParameters=&sqlFormat=none&f=pjson&token=".format(day.month, day.day, day.year)
+    url = "https://services.arcgis.com/su8ic9KbA7PYVxPS/ArcGIS/rest/services/Download_Current_COVID_Case_Counts/FeatureServer/0/query?where=Source%3D%27All%27&objectIds=&time=&resultType=none&outFields=*&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&sqlFormat=none&f=pjson&token="
     response = urllib.urlopen(url)
     data = json.loads(response.read())
 
     actives = data["features"][0]["attributes"]["Active"]
-    fatalities = data["features"][0]["attributes"]["Deceased"]
+    fatalities = data["features"][0]["attributes"]["Deaths"]
     recoveries = data["features"][0]["attributes"]["Recovered"]
     cases = actives + fatalities + recoveries
 
@@ -131,13 +131,15 @@ def main():
 
     print("    HGAC_Counties_COVID_19_Cases")
     print("        No_of_Cases, No_of_Actives, No_of_Deaths, No_of_Recoveries")
-    for county in ["Austin", "Matagorda", "Waller"]:
+    for county in ["Austin", "Colorado", "Liberty", "Matagorda", "Walker", "Waller", "Wharton"]:
         fetch_dshs_case_counts(table, county, date)
 
     fetch_hcph_case_counts(table, day, date)
 
-    if day.strftime('%w') in ("1", "2", "3", "4", "5"): # Update Chambers County and Montgomery County cases on weekdays only
+    if day.strftime('%w') in ("1", "2", "3", "4", "5"): # Update Chambers County cases on weekdays only
         fetch_ccph_case_counts(table, date)
+
+    if day.strftime('%w') == "3": # Update Montgomery County cases on Wednesdays only
         fetch_mcph_case_counts(table, date)
 
     print("        No_of_Tests")
