@@ -82,9 +82,6 @@ def calculate_harris_table(table, county_summary, day):
     print("        Positivity")
     arcpy.CalculateField_management('table_tv', "Positivity", "100 * [Confirmed] / [Tests]")
 
-    print("        Positivity_Daily")
-    arcpy.CalculateField_management('table_tv', "Positivity_Daily", "100 * [Confirmed_Change] / [Tests_Change]")
-
     # Compose date query of the 14-day period from 13 days before the execution date to the execution date
     past_2_weeks_query = earcpy.compose_double_date_query(table, "Date_", end_day=day, period=14)
     confirmed_change_list = earcpy.list_values(table, "Confirmed_Change", past_2_weeks_query)
