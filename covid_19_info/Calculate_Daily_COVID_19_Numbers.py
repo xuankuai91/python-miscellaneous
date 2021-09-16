@@ -162,9 +162,6 @@ def main():
     print("        Positivity")
     arcpy.CalculateField_management(county_summary, "Positivity", "100 * [No_of_Cases] / [No_of_Tests]") # Calculate total positivity
 
-    print("        Tested_Percentage")
-    arcpy.CalculateField_management(county_summary, "Tested_Percentage", "100 * [No_of_Tests] / [Population]") # Calculate percentage of tested population
-
     # Copy data from HGAC_Counties_COVID_19_Cases to HGAC_COVID_19_Confirmed_Cases_and_Tests, and calculate total, change, and 7-day average
     print("    HGAC_COVID_19_Confirmed_Cases_and_Tests")
     confirmed_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Confirmed_Cases_and_Tests"
