@@ -1,18 +1,25 @@
-import arcpy, datetime, sys
+import arcpy, datetime, sys, urllib, json
 sys.path.append(r'\\Hgac.net\FileShare\ArcGIS\DataSvcs\GIS\Process Automation\Modules\Bin')
 import earcpy
 
 def calculate_harris_table(table, county_summary, day):
-    fields = ["NAME", "No_of_Cases", "No_of_Actives", "No_of_Deaths", "No_of_Recoveries", "No_of_Tests"]
+    # Fetch case data from Harris County
+    url = "https://services.arcgis.com/su8ic9KbA7PYVxPS/ArcGIS/rest/services/Download_Current_COVID_Case_Counts/FeatureServer/0/query?where=Source%3D%27All%27&objectIds=&time=&resultType=none&outFields=*&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&sqlFormat=none&f=pjson&token="
+    response = urllib.urlopen(url)
+    data = json.loads(response.read())
+
+    active_cases = data["features"][0]["attributes"]["Active"]
+    deceased_cases = data["features"][0]["attributes"]["Deaths"]
+    recovered_cases = data["features"][0]["attributes"]["Recovered"]
+    confirmed_cases = active_cases + deceased_cases + recovered_cases
+
+    # Fetch test count from the county summary table
+    fields = ["NAME", "No_of_Tests"]
     harris_query = arcpy.AddFieldDelimiters(county_summary, "NAME") + " = 'Harris'"
 
     harris_cursor = arcpy.da.SearchCursor(county_summary, fields, harris_query)
     for harris_row in harris_cursor:
-        confirmed_cases = harris_row[1]
-        active_cases = harris_row[2]
-        deceased_cases = harris_row[3]
-        recovered_cases = harris_row[4]
-        tests = harris_row[5]
+        tests = harris_row[1]
 
     # Compose date query of the execution date (for the latest cases data)
     this_day_query = earcpy.compose_single_date_query(table, "Date_", day, "=")
@@ -71,7 +78,7 @@ def calculate_harris_table(table, county_summary, day):
     previous_2_day = day - datetime.timedelta(2)
     previous_2_day_query = earcpy.compose_single_date_query(table, "Date_", previous_2_day, "=")
 
-    # Calculate total and daily positivity rates, and changes in tests
+    # Calculate total positivity rate and changes in tests
     tests_change = earcpy.calculate_difference(table, "Tests", previous_day_query, previous_2_day_query)
 
     arcpy.SelectLayerByAttribute_management('table_tv', "NEW_SELECTION", previous_day_query)
@@ -130,14 +137,29 @@ def main():
     # Copy data from HGAC_Counties_COVID_19_Cases to HGAC_COVID_19_Harris_County_Info, and calculate fatality rate, positivity rates, changes in cases, tests, and 7-day averages of changes in cases and positivity rate
     print("    HGAC_COVID_19_Harris_County_Info")
     harris_info_table = r"Global.GLOBAL_ADMIN.HGAC_COVID_19_Harris_County_Info"
+
+    try:
+        # Insert a new row to HGAC_COVID_19_Harris_County_Info
+        target_cursor = arcpy.InsertCursor(harris_info_table)
+        target_row = target_cursor.newRow()
+
+        date = "{}/{}/{}".format(today.year, today.month, today.day)
+        target_row.setValue("Date_", date)
+        target_row.setValue("Total_Gen_Bed", 14869)
+        target_row.setValue("Total_ICU_Bed", 1614)
+        target_cursor.insertRow(target_row)
+
+    except:
+        pass
+
     calculate_harris_table(harris_info_table, county_summary, today)
 
 if __name__ == "__main__":
     start_time = datetime.datetime.now()
 
     print("Starting Calculate Harris County Daily COVID-19 Numbers tool ...")
-    print("Version 1.2")
-    print("Last update: 10/20/2020")
+    print("Version 1.8")
+    print("Last update: 2/16/2022")
     print("Support: Xuan.Kuai@h-gac.com" + "\n")
     print("Start time: " + str(start_time) + "\n")
 
