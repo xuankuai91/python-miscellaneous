@@ -1,4 +1,7 @@
-import arcpy, datetime, os
+import arcpy, datetime, os, zipfile
+
+def test():
+    print("earcpy")
 
 def compose_single_date_query(table, date_field, day, operator):
     date = "'{:02d}-{:02d}-{:02d} 00:00:00'".format(day.year, day.month, day.day)
@@ -37,3 +40,20 @@ def list_values(table, field, query):
     values = [row[0] for row in cursor if row[0] is not None]
 
     return values
+
+def zip_folder(in_folder, dst=None):
+    if dst is None:
+        dst = in_folder
+
+    zip_file = zipfile.ZipFile("{}.zip".format(dst), "w", zipfile.ZIP_DEFLATED)
+
+    for dir_name, subdirs, files in os.walk(in_folder):
+        for file in files:
+            file_name = os.path.join(dir_name, file)
+
+            try:
+                zip_file.write(file_name, os.path.relpath(file_name, in_folder))
+            except:
+                pass
+
+    zip_file.close()
