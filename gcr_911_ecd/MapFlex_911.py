@@ -32,9 +32,11 @@ def main():
 
     base_gdb = os.path.join(workspace, "MapFlexBackup.gdb")
 
-    extract_gdb = os.path.join(workspace, r"Extracts1\MapFlexUpdates.gdb")
+    extract_gdb = os.path.join(workspace, r"Extracts\MapFlexUpdates.gdb")
     arcpy.env.workspace = extract_gdb
     arcpy.env.overwriteOutput = True
+
+    username = raw_input("    Please enter your username (e.g., CBERRY for Chuck Berry): ")
 
     # Extract CE and Global SDE layers
     print("    Extracting CE and Global SDE layers ...")
@@ -105,18 +107,46 @@ def main():
 
     # Extract H-GAC 911 SDE layers
     print("    Extracting H-GAC 911 SDE layers ...")
-    hgac_911_datas = ["Brazoria_KeyMap_Ltr", "Brazoria_KeyMap_Page", "Brazoria_Utility", "cell_towers_911", "cell_sectors_911", "Rural911", "STARMap"]
+    hgac_911_layers = ["Brazoria_KeyMap_Ltr", "Brazoria_KeyMap_Page", "Brazoria_Utility", "cell_towers_911", "cell_sectors_911", "Rural911", "STARMap"]
 
-    for data in hgac_911_datas:
-        print("        " + data)
-        src_data = os.path.join(hgac_911_sde, "HGAC_911.HGAC911_ADMIN." + data)
+    for layer in hgac_911_layers:
+        print("        " + layer)
+        src_data = os.path.join(hgac_911_sde, "HGAC_911.HGAC911_ADMIN." + layer)
 
         print("            Extracting ...")
-        arcpy.Copy_management(src_data, data)
+        arcpy.Copy_management(src_data, layer)
 
-    # Delete the hgac_zipcodes layer from the STARMap dataset
-    print("            Deleting hgac_zipcodes ...")
+    # Select test points in HGAC_911.HGAC911_ADMIN.hgac911_address layer
+    address_layer = os.path.join(extract_gdb, "Rural911\hgac911_address")
+    query = "{} = 'TESTPOINT'".format(arcpy.AddFieldDelimiters(address_layer, "StreetName"))
+    arcpy.MakeTableView_management(address_layer, 'address_layer_tv')
+    arcpy.SelectLayerByAttribute_management('address_layer_tv', "NEW_SELECTION", query)
+
+    # Populate date fields in HGAC_911.HGAC911_ADMIN.hgac911_address table
+    print("            Populating date fields ...")
+    now = datetime.datetime.now()
+    now_date = "{}/{}/{}".format(now.year, now.month, now.day)
+    now_time = datetime.datetime.strftime(now, "%#I:%#M:%#S %p")
+
+    date_fields = ["Notes1", "AT_DATETIME", "SP_DATETIME"]
+    for date_field in date_fields:
+        print("                " + date_field)
+        arcpy.CalculateField_management('address_layer_tv', date_field, "CDate(#{}#)".format(now_date))
+
+    print("                CR_DATETIME")
+    arcpy.CalculateField_management('address_layer_tv', "CR_DATETIME", "CDate(#{}#)".format(now_date + " " + now_time))
+
+    # Populate name fields in HGAC_911.HGAC911_ADMIN.hgac911_address table using user input
+    print("            Populating username fields ...")
+    username_fields = ["USERNAME", "CR_USERNAME", "AT_USERNAME", "SP_USERNAME"]
+    for username_field in username_fields:
+        print("                " + username_field)
+        arcpy.CalculateField_management('address_layer_tv', username_field, '\"' + username + '\"')
+
+    # Clean up the geodatabase
+    print("    Cleaning up MapFlexUpdates.gdb ...")
     arcpy.Delete_management(os.path.join(extract_gdb, r"STARMap\hgac_zipcodes"))
+    arcpy.Compact_management(extract_gdb)
 
     # Zip the geodatabase
     print("    Zipping geodatabase ...")
