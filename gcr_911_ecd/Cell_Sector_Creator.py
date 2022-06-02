@@ -120,7 +120,8 @@ def main():
     cell_towers_df = pd.read_csv(cell_towers_csv)
 
     print("        Compiling addresses ...")
-    cell_towers_df['Address'] = cell_towers_df['HouseNumber'] + " " + cell_towers_df['PrefixDirectional'] + " " + cell_towers_df['Street'] + " " + cell_towers_df['SuffixDirectional']
+    print(type(cell_towers_df['HouseNumber']))
+    cell_towers_df['Address'] = cell_towers_df['HouseNumber'].astype(str) + " " + cell_towers_df['PrefixDirectional'].astype(str) + " " + cell_towers_df['Street'].astype(str) + " " + cell_towers_df['SuffixDirectional'].astype(str) #.astype(str) needed for concatenating dataframe object with string object
     cell_towers_df['Address'] = cell_towers_df['Address'].replace('\s+', ' ', regex=True)
 
     for index in cell_towers_df.index:
