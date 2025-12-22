@@ -19,7 +19,7 @@ def initialize_message(sender_email, receivers_list):
     return message
 
 def summarize_backups(soup):
-    pattern = os.path.join(r"<\\path\to\backup\folder>", "*.webgissite")
+    pattern = os.path.join(r"\\houdrsmb\Backup\DR\webgisdr\backups", "*-INCREMENTAL.webgissite")
     backups_list = glob.glob(pattern)
     backup_sizes_list = []
     backup_dates_list = []
@@ -59,9 +59,13 @@ def summarize_backups(soup):
     ax.tick_params(axis='x', which='both', rotation=90)
 
     plt.tight_layout()
-    fig.savefig("full.png")
+    fig.savefig("incremental.png")
 
 def monitor_webgisdr(json_file, message):
+    date_str = datetime.now().strftime("%Y%m%d")
+    current_log = fr"\\houdrsmb\Backup\DR\webgisdr\logs\webgisdr-full-{date_str}.log.json"
+    shutil.copy(webgisdr_log, current_log)
+
     with open(json_file, 'r') as j:
         data = json.load(j)
         status = data["status"]
@@ -75,11 +79,11 @@ def monitor_webgisdr(json_file, message):
 
     h2 = soup.find('h2')
     if status == "success":
-        message['Subject'] = "SUCCESS - Full WebGISDR Backup Monitoring - Dev-WMap-Houston"
-        h2.string = "SUCCESS - Full WebGISDR Backup Monitoring - Dev-WMap-Houston"
+        message['Subject'] = "SUCCESS - Incremental WebGISDR Backup Monitoring - Dev-WMap-Houston"
+        h2.string = "SUCCESS - Incremental WebGISDR Backup Monitoring - Dev-WMap-Houston"
     else:
-        message['Subject'] = "FAILURE - Full WebGISDR Backup Monitoring - Dev-WMap-Houston"
-        h2.string = "FAILURE - Full WebGISDR Backup Monitoring - Dev-WMap-Houston"
+        message['Subject'] = "FAILURE - Incremental WebGISDR Backup Monitoring - Dev-WMap-Houston"
+        h2.string = "FAILURE - Incremental WebGISDR Backup Monitoring - Dev-WMap-Houston"
 
     tbody = soup.find('tbody')
     tr_list = tbody.find_all('tr')
@@ -102,6 +106,7 @@ def monitor_webgisdr(json_file, message):
         p_list = soup.find_all('p')
         p_list[0].append(location.replace("//", "/"))
         p_list[1].append(f"{os.path.getsize(location) / (1024 ** 3):.3f} GB")
+        p_list[3].append(current_log)
     else:
         pass
 
@@ -110,7 +115,7 @@ def monitor_webgisdr(json_file, message):
     return soup
 
 if __name__ == "__main__":
-    webgisdr_log = r"\\path\to\log\folder\webgisdr.log.json"
+    webgisdr_log = r"\\houdrsmb\Backup\DR\webgisdr\logs\webgisdr-incremental.log.json"
     sender_email = SENDER_EMAIL
     receivers_list = RECEIVERS_LIST
     smtp_server = SMTP_SERVER
@@ -118,14 +123,11 @@ if __name__ == "__main__":
     smtp_username = SMTP_USERNAME
     smtp_password = SMTP_PASSWORD
 
-    date_str = datetime.now().strftime("%Y%m%d")
-    shutil.copy(webgisdr_log, fr"\\path\to\log\folder\webgisdr-{date_str}.log.json")
-
     message = initialize_message(sender_email, receivers_list)
     soup = monitor_webgisdr(webgisdr_log, message)
     message.attach(MIMEText(str(soup), 'html'))
 
-    with open("full.png", 'rb') as p:
+    with open("incremental.png", 'rb') as p:
         data = p.read()
 
     chart = MIMEImage(data, 'png')
